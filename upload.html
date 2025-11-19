@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin Panel</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-4">
+
+<script>
+  // BLOCK UNAUTHORIZED USERS
+  if (sessionStorage.getItem("mana_admin") !== "1") {
+    alert("Access denied");
+    window.location.href = "admin.html";
+  }
+</script>
+
+<h2 class="text-2xl font-bold mb-4 text-green-700">📦 Add New Fruit</h2>
+
+<div class="bg-white p-4 rounded-xl shadow max-w-md">
+
+  <input id="name_input" placeholder="Fruit Name" class="w-full p-2 border rounded mb-2">
+
+  <input id="price_input" placeholder="Price" class="w-full p-2 border rounded mb-2">
+
+  <!-- NEW: FILE INPUT -->
+  <input id="image_file" type="file" accept="image/*" 
+         class="w-full p-2 border rounded mb-2" onchange="previewImage()">
+
+  <!-- IMAGE PREVIEW -->
+  <img id="preview" class="w-full h-32 object-cover rounded hidden mb-3">
+
+  <button onclick="addProduct()" 
+          class="w-full bg-green-600 text-white p-2 rounded mt-2">Add Product</button>
+
+  <button onclick="logout()" 
+          class="w-full bg-red-600 text-white p-2 rounded mt-4">Logout</button>
+</div>
+
+<h2 class="text-xl font-bold mt-6 mb-2">🗂 Current Products</h2>
+<div id="list" class="grid grid-cols-2 md:grid-cols-4 gap-3"></div>
+
+<script>
+  const STORAGE_KEY = "kmr_products_v1";
+
+  let imageBase64 = "";
+
+  // PREVIEW IMAGE + CONVERT TO BASE64
+  function previewImage() {
+    let file = document.getElementById("image_file").files[0];
+    if (!file) return;
+
+    let reader = new FileReader();
+
+    reader.onload = function (e) {
+      imageBase64 = e.target.result;
+      document.getElementById("preview").src = imageBase64;
+      document.getElementById("preview").classList.remove("hidden");
+    };
+
+    reader.readAsDataURL(file);
+  }
+
+  function load() {
+    let list = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    let box = document.getElementById("list");
+    box.innerHTML = "";
+
+    list.forEach((p, i) => {
+      box.innerHTML += `
+        <div class="bg-white p-3 rounded shadow">
+          <img src="${p.image}" class="w-full h-24 object-cover rounded">
+          <h3 class="font-bold">${p.name}</h3>
+          <p>₹${p.price}</p>
+          <button onclick="del(${i})" 
+            class="bg-red-500 text-white px-2 py-1 mt-2 w-full rounded">Delete</button>
+        </div>`;
+    });
+  }
+
+  function addProduct() {
+    let name = name_input.value.trim();
+    let price = price_input.value.trim();
+
+    if (!name || !price || !imageBase64) {
+      alert("Name, price & image required!");
+      return;
+    }
+
+    let list = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    list.push({ name, price, image: imageBase64 });
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+
+    alert("Product Added!");
+
+    name_input.value = "";
+    price_input.value = "";
+    image_file.value = "";
+    document.getElementById("preview").classList.add("hidden");
+
+    imageBase64 = "";
+
+    load();
+  }
+
+  function del(i) {
+    let list = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    list.splice(i, 1);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+    load();
+  }
+
+  function logout() {
+    sessionStorage.removeItem("mana_admin");
+    window.location.href = "admin.html";
+  }
+
+  load();
+</script>
+
+</body>
+</html>
